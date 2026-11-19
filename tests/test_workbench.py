@@ -160,3 +160,14 @@ def test_run_items_endpoint(server):
     code, body = call(port, "/api/run/local/e1/items?condition=kri", token=wb.token)
     assert code == 200 and any(i["models"] for i in json.loads(body)["items"])
     assert call(port, "/api/run/local/..%2fx/items", token=wb.token)[0] == 404
+
+
+def test_csv_export(server):
+    wb, port = server
+    r = wb.start_job({"run_id": "c1", "reps": 1, "mock": True, "models": [{"label": "gemini-flash"}]})
+    wait(wb, r["job_id"])
+    code, body = call(port, "/api/export/local/c1.csv", token=wb.token)
+    lines = body.decode().strip().split("\n")
+    assert code == 200 and lines[0].startswith("run_id,model,scope")
+    assert any(",overall," in ln for ln in lines) and any(",domain," in ln for ln in lines)
+    assert all(ln.split(",")[-2] == "True" for ln in lines[1:])

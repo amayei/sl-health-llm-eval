@@ -411,6 +411,26 @@ def md_to_html(md: str) -> str:
     return "\n".join(out)
 
 
+def export_csv(run) -> str:
+    """Long-format results for analysts: one row per model and scope."""
+    out = io.StringIO()
+    w = csv.writer(out, lineterminator="\n")
+    w.writerow(["run_id", "model", "scope", "domain", "n_items", "accuracy", "ci_low", "ci_high", "order_consistency",
+                "unparsed_rate", "failed_calls", "mock", "harness_version"])
+    meta = run["meta"]
+    tail = [bool(meta.get("mock")), meta.get("harness_version", "")]
+    for model, m in run["summary"]["english"].items():
+        w.writerow([run["id"], model, "overall", "", m["n_items"], m["accuracy"], m["ci_low"], m["ci_high"], m.get("consistency"),
+                    m.get("unparsed_rate"), m.get("failed_calls"), *tail])
+        for dom, d in sorted((m.get("domain_accuracy") or {}).items()):
+            w.writerow([run["id"], model, "domain", dom, d["n_items"], d["accuracy"], "", "", "", "", "", *tail])
+    for model, k in (run["summary"].get("krio") or {}).items():
+        w.writerow([run["id"], model, "krio_en_paired", "", k["n_items"], k.get("en_accuracy"), "", "", "", "", "", *tail])
+        w.writerow([run["id"], model, "krio_kri_paired", "", k["n_items"], k.get("kri_accuracy"), "", "", "", "", "", *tail])
+        w.writerow([run["id"], model, "krio_gap_en_minus_kri", "", k["n_items"], k.get("gap"), k.get("ci_low"), k.get("ci_high"), "", "", "", *tail])
+    return out.getvalue()
+
+
 def export_html(run) -> str:
     meta = run["meta"]
     banner = ""
@@ -499,6 +519,11 @@ def make_handler(wb: Workbench, port_holder):
                 if m:
                     q = parse_qs(urlparse(self.path).query)
                     return self._send(200, wb.run_items(m.group(1), unquote(m.group(2)), (q.get("condition") or ["en"])[0]))
+                m = re.match(r"^/api/export/(published|local)/([^/]+)\.csv$", path)
+                if m:
+                    run = wb.get_run(m.group(1), unquote(m.group(2)))
+                    return self._send(200, export_csv(clean_nan(run)), "text/csv; charset=utf-8",
+                                      {"Content-Disposition": f'attachment; filename="results-{run["id"]}.csv"'})
                 m = re.match(r"^/api/export/(published|local)/([^/]+)\.html$", path)
                 if m:
                     run = wb.get_run(m.group(1), unquote(m.group(2)))

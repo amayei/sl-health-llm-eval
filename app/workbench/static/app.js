@@ -71,7 +71,7 @@ function leaderboard(en) {
     g += marker(idx, x(m.accuracy), y, 7);
     g += `<text x="${x(m.ci_high) + 10}" y="${y + 4}" font-weight="700">${pct(m.accuracy)}</text>`;
   });
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Models ranked by accuracy with 95% intervals">${g}</svg>
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc("Models ranked by accuracy with 95% intervals: " + names.map((n) => `${n} ${pct(en[n].accuracy)}, interval ${pct(en[n].ci_low)} to ${pct(en[n].ci_high)}`).join("; "))}">${g}</svg>
   <div class="legend"><span>Marker: mean item accuracy. Band: 95% bootstrap interval over items. Dashed line: chance (25%).</span></div>`;
 }
 
@@ -122,15 +122,41 @@ function runbar() {
   const st = S.state, bar = $("#runbar");
   if (!st.runs.length || ["run", "items", "help"].includes(S.view)) { bar.innerHTML = ""; return; }
   bar.innerHTML = `<label for="runsel" class="sr">Run</label><select id="runsel">${st.runs.map((r) => `<option value="${esc(r.source)}/${esc(r.id)}" ${`${r.source}/${r.id}` === S.sel ? "selected" : ""}>${esc(r.id)} (${r.source}${r.mock ? ", simulated" : ""})</option>`).join("")}</select>
-  <button class="btn sec" id="exp">Export HTML report</button>`;
+  <button class="btn sec" id="exp">Export report (HTML)</button><button class="btn sec" id="expcsv">Export data (CSV)</button>`;
   $("#runsel").onchange = (e) => { S.sel = e.target.value; render(); };
   $("#exp").onclick = () => { const [s, i] = S.sel.split("/"); download(`/api/export/${s}/${encodeURIComponent(i)}.html`, `report-${i}.html`); };
+  $("#expcsv").onclick = () => { const [s, i] = S.sel.split("/"); download(`/api/export/${s}/${encodeURIComponent(i)}.csv`, `results-${i}.csv`); };
 }
 const EMPTY = `<div class="eyebrow">Welcome</div><h1>Test an AI model on public health questions</h1><p class="lead">Three steps. No technical setup needed to try it.</p>
 <div class="steps"><div class="step"><b class="n">1</b><h3>Start a trial run</h3><p>Open New evaluation and tick "Simulated run". It uses made-up answers so you can look around safely.</p></div>
 <div class="step"><b class="n">2</b><h3>Read the results</h3><p>The Overview, Compare models and Domains pages explain each chart in plain words.</p></div>
 <div class="step"><b class="n">3</b><h3>Run it for real</h3><p>Add an API key for a model such as ChatGPT, Claude or Gemini and run the same questions.</p></div></div>
 <button class="btn" onclick="go('run')">Start a trial run</button>`;
+
+/* ---------- provenance ---------- */
+function provenance(run) {
+  const m = run.meta, rets = run.summary.model_returned || {};
+  const returned = Object.entries(rets).map(([k, v]) => `${esc(k)}: ${esc(Array.isArray(v) ? v.join(", ") : v)}`).join("; ");
+  return `<section class="card prov" style="margin-top:16px" aria-label="Provenance and reproducibility"><h2>Provenance and reproducibility</h2>
+  <dl><dt>Run</dt><dd>${esc(run.id)} (${esc(run.source)})</dd><dt>Started (UTC)</dt><dd>${esc(m.started_utc || "unknown")}</dd>
+  <dt>Harness version</dt><dd>${esc(m.harness_version)}</dd><dt>Code commit</dt><dd>${esc((m.git_commit || "not recorded").slice(0, 12))}</dd>
+  <dt>Item bank fingerprint</dt><dd>${esc((m.dataset_sha256 || "").slice(0, 16))} (SHA-256, first 16 characters)</dd>
+  <dt>Repetitions and seed</dt><dd>${esc(m.args?.reps ?? "?")} repetitions, seed ${esc(m.args?.seed ?? "?")}</dd>
+  <dt>Models requested</dt><dd>${esc((m.models || []).map((x) => x.model).join(", "))}</dd>${returned ? `<dt>Models returned by provider</dt><dd>${returned}</dd>` : ""}
+  <dt>Item status</dt><dd>${esc(Object.entries(m.item_status_counts || {}).map(([k, v]) => `${v} ${k}`).join(", "))}</dd></dl>
+  <p>Anyone with the repository, the same item bank and this seed can repeat the analysis. Hosted models change over time, so answers may differ on a new run.</p></section>`;
+}
+
+/* ---------- about ---------- */
+async function viewAbout() {
+  setBanner(null);
+  const st = S.state;
+  $("#main").innerHTML = `<h1>About and provenance</h1><p class="lead">What this application is, which versions are running, and where your data is kept.</p>
+  <section class="card prov"><h2>This installation</h2><dl><dt>Application</dt><dd>SL-Health-LLM-Eval Evaluation Workbench ${esc(st.app_version)} (pilot)</dd><dt>Evaluation harness</dt><dd>${esc(st.harness_version)}</dd>
+  <dt>Item bank</dt><dd>${esc(Object.entries(st.item_status).map(([k, v]) => `${v} ${k}`).join(", "))}; ${st.n_krio} Krio items</dd><dt>Your runs are stored in</dt><dd>${esc(st.workspace)}</dd></dl></section>
+  <section class="card prov" style="margin-top:16px"><h2>Author and licence</h2><p>Created by Alhassan Mayei. Code, protocol and data: github.com/amayei/sl-health-llm-eval. Released under the repository licence. Pilot software provided as is, without warranty, not for clinical decisions.</p></section>
+  <section class="card prov" style="margin-top:16px"><h2>Security and privacy</h2><p>The application listens on this computer only. API keys are kept in memory for the run and are never saved. Questions are sent only to the model provider you select.</p></section>`;
+}
 
 /* ---------- 01 overview ---------- */
 function headline(run) {
@@ -148,7 +174,7 @@ async function viewOverview() {
   const failed = names.reduce((a, n) => a + (en[n].failed_calls || 0), 0);
   const au = sm.audit || { consensus_against_key: [], never_correct: [] };
   $("#main").innerHTML = `
-  <div class="eyebrow">Run ${esc(run.id)} · harness ${esc(run.meta.harness_version)} · ${esc((run.meta.started_utc || "").slice(0, 10))}</div>
+  <h1>Overview</h1><div class="eyebrow">Run ${esc(run.id)} · harness ${esc(run.meta.harness_version)} · ${esc((run.meta.started_utc || "").slice(0, 10))}</div>
   <div class="hero"><div class="eyebrow">Headline</div><div class="big">${headline(run)}</div>
     <p>Accuracy on multiple-choice public health questions is a screening signal. It does not show that a tool is safe or suitable for use in a health programme.</p></div>
   <div class="grid cols4">
@@ -164,6 +190,7 @@ async function viewOverview() {
       ${au.consensus_against_key.length ? `<table><thead><tr><th>Item</th><th>Key</th><th>Models chose</th></tr></thead><tbody>${au.consensus_against_key.map((a) => `<tr><td><button class="link" data-item="${esc(a.id)}">${esc(a.id)}</button></td><td>${esc(a.key)}</td><td>${esc(a.consensus)} (${esc(a.models_agreeing)} of ${esc(a.models)})</td></tr>`).join("")}</tbody></table>` : "<p>No item flagged. With fewer than 3 models the audit cannot flag items.</p>"}
       <p>Never answered correctly by any model: ${au.never_correct.length ? au.never_correct.map((i) => `<button class="link" data-item="${esc(i)}">${esc(i)}</button>`).join(", ") : "none"}.</p></div>
   </div>`;
+  $("#main").insertAdjacentHTML("beforeend", provenance(run));
   $$("[data-item]").forEach((b) => (b.onclick = () => { S.focusItem = b.dataset.item; go("explorer"); }));
 }
 
@@ -203,10 +230,10 @@ async function viewExplorer() {
   const ex = S.ex, domains = [...new Set(ex.items.map((i) => i.domain))].sort();
   $("#main").innerHTML = `<div class="eyebrow">Item explorer</div><h1>Every item, every model</h1>
   <p class="lead">Open an item to see how each model answered across option orders. The key is shown in green. Bars show how many replies chose each option.</p>
-  <div class="row noprint" style="margin-bottom:12px"><select id="xd" style="width:auto"><option value="">All domains</option>${domains.map((d) => `<option>${esc(d)}</option>`).join("")}</select>
-  <select id="xf" style="width:auto"><option value="all">All items</option><option value="hard">Hardest first</option><option value="split">Models disagree most</option><option value="allwrong">Nobody correct</option></select>
-  ${hasKri ? `<select id="xc" style="width:auto"><option value="en">English</option><option value="kri" ${S.cond === "kri" ? "selected" : ""}>Krio</option></select>` : ""}
-  <input id="xq" type="text" placeholder="Search item text" class="grow"><span class="lead" id="xn"></span></div><div id="xl"></div>`;
+  <div class="row noprint" style="margin-bottom:12px"><select id="xd" aria-label="Filter by domain" style="width:auto"><option value="">All domains</option>${domains.map((d) => `<option>${esc(d)}</option>`).join("")}</select>
+  <select id="xf" aria-label="Sort or filter items" style="width:auto"><option value="all">All items</option><option value="hard">Hardest first</option><option value="split">Models disagree most</option><option value="allwrong">Nobody correct</option></select>
+  ${hasKri ? `<select id="xc" aria-label="Language of items" style="width:auto"><option value="en">English</option><option value="kri" ${S.cond === "kri" ? "selected" : ""}>Krio</option></select>` : ""}
+  <input id="xq" type="text" aria-label="Search item text" placeholder="Search item text" class="grow"><span class="lead" id="xn"></span></div><div id="xl"></div>`;
   const rate = (c) => c.correct / Math.max(c.calls, 1);
   const acc = (it) => { const v = Object.values(it.models).map(rate); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
   const spread = (it) => { const v = Object.values(it.models).map(rate); return v.length ? Math.max(...v) - Math.min(...v) : 0; };
@@ -260,7 +287,7 @@ async function viewSummary() {
   <h2>What this does not show</h2><ul><li>Safety or suitability for any clinical or programme use.</li><li>Performance on free-text questions, patient-facing advice or local workflows.</li></ul>
   <h2>Caveats</h2><ul>${caveats.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
   <h2>Suggested next steps</h2><ol><li>Independent review of the item bank against national guidelines.</li><li>A second Krio reader and back-translation.</li><li>A free-text scenario protocol with clinician scoring.</li></ol>
-  <p><small>Contact: Alhassan Mayei, alhassanmayei@gmail.com. Code, protocol and data: github.com/amayei/sl-health-llm-eval</small></p></article>`;
+  <p><small>Run ${esc(run.id)}, harness ${esc(meta.harness_version)}, item bank fingerprint ${esc((meta.dataset_sha256 || "").slice(0, 12))}, ${esc(meta.args?.reps ?? "?")} repetitions, seed ${esc(meta.args?.seed ?? "?")}.</small></p><p><small>Contact: Alhassan Mayei, alhassanmayei@gmail.com. Code, protocol and data: github.com/amayei/sl-health-llm-eval</small></p></article>`;
   $("#pr").onclick = () => window.print();
 }
 
@@ -271,9 +298,9 @@ async function viewItems() {
   const kmap = Object.fromEntries(krio.map((k) => [k.id, k]));
   const domains = [...new Set(items.map((i) => i.domain))].sort();
   $("#main").innerHTML = `<div class="eyebrow">Item bank</div><h1>${items.length} items</h1><p class="lead">The key is highlighted for reviewers. Status shows whether the item passed the review gate.</p>
-   <div class="row noprint"><select id="fdom" style="width:auto"><option value="">All domains</option>${domains.map((d) => `<option>${esc(d)}</option>`).join("")}</select>
-   <select id="flang" style="width:auto"><option value="en">English</option><option value="kri">Krio (${krio.length})</option></select>
-   <input id="fq" type="text" placeholder="Search text" class="grow"><span id="icount" class="lead"></span></div><div id="ilist" style="margin-top:12px"></div>`;
+   <div class="row noprint"><select id="fdom" aria-label="Filter by domain" style="width:auto"><option value="">All domains</option>${domains.map((d) => `<option>${esc(d)}</option>`).join("")}</select>
+   <select id="flang" aria-label="Language of items" style="width:auto"><option value="en">English</option><option value="kri">Krio (${krio.length})</option></select>
+   <input id="fq" type="text" aria-label="Search item text" placeholder="Search text" class="grow"><span id="icount" class="lead"></span></div><div id="ilist" style="margin-top:12px"></div>`;
   const draw = () => {
     const d = $("#fdom").value, q = $("#fq").value.toLowerCase(), lang = $("#flang").value;
     const list = items.filter((i) => (!d || i.domain === d) && (lang === "en" || kmap[i.id]) && (!q || (lang === "kri" ? kmap[i.id].question : i.question).toLowerCase().includes(q)));
@@ -298,7 +325,7 @@ function viewRun() {
      <input type="password" class="mkey" data-i="${i}" placeholder="API key (${esc(m.key_name)}), kept in memory only" autocomplete="off"></div>`).join("");
   $("#main").innerHTML = `<div class="eyebrow">New evaluation</div><h1>Run the protocol</h1><p class="lead">The same questions are asked of every model, with the answer options shuffled, so results can be compared fairly.</p>
   <div class="crumbs"><span class="on">1 Choose questions</span><span class="on">2 Choose models</span><span>3 Start and watch progress</span></div>
-  <div class="grid cols2"><div class="card"><h2>1. Questions</h2><select id="bank">${banks}</select>
+  <div class="grid cols2"><div class="card"><h2>1. Questions</h2><select id="bank" aria-label="Item bank">${banks}</select>
     <label class="chk"><input type="checkbox" id="mock"><span>Simulated run (random answers, no API key, for exploring the interface only)</span></label>
     ${drafts ? `<label class="chk"><input type="checkbox" id="drafts"><span>Provisional run: allow unapproved items (${drafts} draft). Results will be labelled provisional.</span></label>` : ""}
     <label for="rid">Run name</label><input id="rid" type="text" placeholder="for example pilot-1">
@@ -314,7 +341,7 @@ function viewRun() {
       <label for="cu">Base URL</label><input id="cu" type="text" placeholder="http://127.0.0.1:11434/v1"><label for="ck">API key (optional)</label><input id="ck" type="password" autocomplete="off">
       <label class="chk"><input type="checkbox" id="cuse"><span>Include this model</span></label></details></div></div>
   <div class="row" style="margin-top:16px"><button class="btn" id="go">Start evaluation</button><button class="btn sec" id="stop" hidden>Stop</button></div>
-  <div id="rmsg"></div><div id="prog" style="margin-top:10px"></div><pre class="log" id="log" hidden></pre>`;
+  <div id="rmsg"></div><div id="prog" style="margin-top:10px"></div><pre class="log" id="log" aria-live="polite" aria-label="Run log" hidden></pre>`;
   $("#bimp").onclick = async () => {
     try {
       const r = await api("/api/itembanks", { body: { name: $("#bname").value.trim(), text: $("#btext").value, format: "csv", confirm_reviewed: $("#brev").checked } });
@@ -334,7 +361,7 @@ async function startJob() {
   try {
     const r = await api("/api/jobs", { body });
     $$(".mkey,#ck").forEach((i) => (i.value = ""));
-    S.job = r.job_id;
+    S.job = r.job_id; S.running = true;
     $("#rmsg").innerHTML = ""; $("#go").disabled = true; $("#stop").hidden = false; $("#log").hidden = false;
     poll();
   } catch (e) { $("#rmsg").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; }
@@ -344,6 +371,7 @@ async function poll() {
   $("#log").textContent = j.log.join("\n");
   const done = Object.values(j.progress).reduce((t, v) => t + v.calls, 0), total = (j.expected || 0) * (j.n_models || 1), p = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
   $("#prog").innerHTML = `${total ? `<div class="progress" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><div style="width:${p}%"></div></div><div><strong>${p}%</strong> done (${done} of ${total} answers)</div>` : ""}` + Object.entries(j.progress).map(([k, v]) => `<div>${esc(k)}: ${v.calls} answers, ${v.failures} failed</div>`).join("");
+  S.running = j.status === "running";
   if (j.status === "running") { S.timer = setTimeout(poll, 1000); return; }
   $("#go").disabled = false; $("#stop").hidden = true;
   if (j.status === "done") {
@@ -373,16 +401,20 @@ function viewHelp() {
 /* ---------- shell ---------- */
 async function render() {
   clearTimeout(S.timer);
-  $$("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === S.view));
+  $$("#nav button").forEach((b) => { const on = b.dataset.view === S.view; b.classList.toggle("on", on); if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   try {
     runbar();
-    const v = { overview: viewOverview, compare: viewCompare, domains: viewDomains, explorer: viewExplorer, summary: viewSummary, items: viewItems, run: viewRun, help: viewHelp }[S.view];
+    const titles = { overview: "Overview", compare: "Compare models", domains: "Domains", explorer: "Item explorer", summary: "Partner summary", items: "Item bank", run: "New evaluation", help: "Guide", about: "About" };
+    document.title = `${titles[S.view]} | SL-Health-LLM-Eval Workbench`;
+    const v = { about: viewAbout, overview: viewOverview, compare: viewCompare, domains: viewDomains, explorer: viewExplorer, summary: viewSummary, items: viewItems, run: viewRun, help: viewHelp }[S.view];
     await v();
   } catch (e) { $("#main").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; }
 }
 function go(v) { S.view = v; render(); $("#main").focus(); window.scrollTo(0, 0); }
 window.go = go;
 $$("#nav button").forEach((b) => (b.onclick = () => go(b.dataset.view)));
+$("#about-link").onclick = () => go("about");
+window.addEventListener("beforeunload", (e) => { if (S.running) { e.preventDefault(); e.returnValue = ""; } });
 function setTheme(t) { document.documentElement.setAttribute("data-theme", t); try { localStorage.setItem("slwb-theme", t); } catch (e) {} $$("[data-theme-set]").forEach((b) => b.classList.toggle("on", b.dataset.themeSet === t)); }
 $$("[data-theme-set]").forEach((b) => (b.onclick = () => setTheme(b.dataset.themeSet)));
 setTheme(document.documentElement.getAttribute("data-theme"));

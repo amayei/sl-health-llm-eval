@@ -15,24 +15,27 @@
     <div class="brand"><span class="logo" aria-hidden="true">SL</span>
       <div><strong>Evaluation Workbench</strong><small>Version __APP_VERSION__ pilot</small></div></div>
     <nav id="nav">
-      <button data-view="overview" class="on"><i>01</i>Overview</button>
-      <button data-view="compare"><i>02</i>Compare models</button>
-      <button data-view="domains"><i>03</i>Domains</button>
-      <button data-view="explorer"><i>04</i>Item explorer</button>
-      <button data-view="summary"><i>05</i>Partner summary</button>
+      <button data-view="overview" class="on"><i aria-hidden="true">01</i>Overview</button>
+      <button data-view="compare"><i aria-hidden="true">02</i>Compare models</button>
+      <button data-view="domains"><i aria-hidden="true">03</i>Domains</button>
+      <button data-view="explorer"><i aria-hidden="true">04</i>Item explorer</button>
+      <button data-view="summary"><i aria-hidden="true">05</i>Partner summary</button>
       <hr>
-      <button data-view="run"><i>+</i>New evaluation</button>
-      <button data-view="items"><i>Q</i>Item bank</button>
-      <button data-view="help"><i>?</i>Guide</button>
+      <button data-view="run"><i aria-hidden="true">+</i>New evaluation</button>
+      <button data-view="items"><i aria-hidden="true">Q</i>Item bank</button>
+      <button data-view="help"><i aria-hidden="true">?</i>Guide</button>
     </nav>
     <div class="side-foot">
+      <p><button class="link" id="about-link">About and provenance</button></p>
       <div class="seg" role="group" aria-label="Theme"><button id="th-light" data-theme-set="light">Light</button><button id="th-dark" data-theme-set="dark">Dark</button></div>
       <p>Runs on this computer. Keys stay in memory. A pilot evaluation tool, not for clinical decisions.</p>
     </div>
   </aside>
   <div class="content">
-    <div id="banner" class="banner" hidden></div>
-    <div class="runbar noprint" id="runbar"></div>
+    <section aria-label="Run status and controls">
+      <div id="banner" class="banner" role="status" hidden></div>
+      <div class="runbar noprint" id="runbar"></div>
+    </section>
     <main id="main" tabindex="-1"></main>
   </div>
 </div>
