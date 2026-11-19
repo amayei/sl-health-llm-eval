@@ -1,8 +1,11 @@
 name: build-windows
 on:
   workflow_dispatch:
-  push:
-    tags: ["workbench-v*"]
+    inputs:
+      release_tag:
+        description: Tag to publish as a pre-release (leave empty to only build)
+        required: false
+        default: ""
 permissions:
   contents: write
 jobs:
@@ -38,16 +41,13 @@ jobs:
           path: |
             dist/SL-Health-LLM-Eval-Workbench-win64.zip
             dist/SL-Health-LLM-Eval-Workbench-Setup.exe
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          prerelease: true
-          name: Evaluation Workbench ${{ github.ref_name }} (pilot, unsigned)
-          body: |
-            Pilot release of the SL-Health-LLM-Eval Evaluation Workbench for Windows.
-            Unsigned build: Windows SmartScreen may warn. Choose More info, then Run anyway, only if you downloaded this from this repository.
-            Items are author-approved only, with no independent review. See docs/LIMITATIONS.md.
-          files: |
-            dist/SL-Health-LLM-Eval-Workbench-win64.zip
-            dist/SL-Health-LLM-Eval-Workbench-Setup.exe
+      - name: Publish pre-release
+        if: ${{ inputs.release_tag != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $notes = "Pilot release of the SL-Health-LLM-Eval Evaluation Workbench for Windows.`n`nUnsigned build: Windows SmartScreen may warn. Choose More info, then Run anyway, only if you downloaded this from this repository.`n`nItems are author-approved only, with no independent review. See docs/LIMITATIONS.md."
+          $files = @("dist\SL-Health-LLM-Eval-Workbench-win64.zip")
+          if (Test-Path "dist\SL-Health-LLM-Eval-Workbench-Setup.exe") { $files += "dist\SL-Health-LLM-Eval-Workbench-Setup.exe" }
+          gh release create "${{ inputs.release_tag }}" @files --repo "${{ github.repository }}" --target "${{ github.sha }}" --prerelease --title "Evaluation Workbench ${{ inputs.release_tag }} (pilot, unsigned)" --notes "$notes"
