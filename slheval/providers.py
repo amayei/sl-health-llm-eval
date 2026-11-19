@@ -101,14 +101,15 @@ class OpenAIProvider:
 
     URL = "https://api.openai.com/v1/chat/completions"
 
-    def __init__(self, model, api_key, max_tokens=16):
-        self.model, self.api_key, self.max_tokens = model, api_key, max_tokens
+    def __init__(self, model, api_key, max_tokens=16, extra=None):
+        self.model, self.api_key, self.max_tokens, self.extra = model, api_key, max_tokens, extra or {}
 
     def _body(self, system, user, with_temperature):
         body = {
             "model": self.model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "max_completion_tokens": self.max_tokens,
+            **self.extra,
         }
         if with_temperature:
             body["temperature"] = 0
@@ -185,7 +186,7 @@ def make_provider(cfg, api_key):
     if kind == "gemini":
         return GeminiProvider(cfg["model"], api_key, max_tokens)
     if kind == "openai":
-        return OpenAIProvider(cfg["model"], api_key, max_tokens)
+        return OpenAIProvider(cfg["model"], api_key, max_tokens, cfg.get("extra"))
     if kind == "anthropic":
         return AnthropicProvider(cfg["model"], api_key, max_tokens)
     if kind in OPENAI_COMPAT_URLS:

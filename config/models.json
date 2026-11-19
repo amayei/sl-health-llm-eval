@@ -1,5 +1,5 @@
 {
-  "_note": "Model identifiers. The Gemini ids were verified on 2026-11-19 with `python -m slheval list-models` (workflow: list-models). Provider catalogues change often, so run `python -m slheval check-models` (the evaluate workflow does this first) before a real run. Models without a key are skipped. The Anthropic, OpenAI, Groq and OpenRouter ids are unverified: run the list-models workflow once the provider secrets exist, and correct any id it does not list before a real run.",
+  "_note": "Model identifiers. Gemini and OpenAI ids were verified on 2026-11-19 with the list-models workflow. Provider catalogues change often, so run `python -m slheval check-models` (the evaluate workflow does this first) before a real run. Models without a key are skipped. Anthropic ids (claude-sonnet-5-5, claude-haiku-5-5) and the Groq and OpenRouter ids are unverified. OpenAI reasoning models spend completion tokens on reasoning, so max_tokens is 1024 with low reasoning effort; the reply is still parsed strictly as a single letter.",
   "models": [
     {
       "label": "gemini-flash",
@@ -58,36 +58,26 @@
       "rpm": 30
     },
     {
-      "label": "chatgpt-openai",
+      "label": "chatgpt-gpt-5.5",
       "provider": "openai",
-      "model": "gpt-5",
+      "model": "gpt-5.5",
       "api_key_env": "OPENAI_API_KEY",
-      "max_tokens": 16,
+      "max_tokens": 1024,
+      "extra": {
+        "reasoning_effort": "low"
+      },
       "rpm": 30
     },
     {
-      "label": "chatgpt-mini-openai",
+      "label": "chatgpt-gpt-5.4-mini",
       "provider": "openai",
-      "model": "gpt-5-mini",
+      "model": "gpt-5.4-mini",
       "api_key_env": "OPENAI_API_KEY",
-      "max_tokens": 16,
+      "max_tokens": 1024,
+      "extra": {
+        "reasoning_effort": "low"
+      },
       "rpm": 30
-    },
-    {
-      "label": "chatgpt-via-openrouter",
-      "provider": "openrouter",
-      "model": "openai/gpt-5",
-      "api_key_env": "OPENROUTER_API_KEY",
-      "max_tokens": 16,
-      "rpm": 20
-    },
-    {
-      "label": "claude-via-openrouter",
-      "provider": "openrouter",
-      "model": "anthropic/claude-sonnet-5-5",
-      "api_key_env": "OPENROUTER_API_KEY",
-      "max_tokens": 16,
-      "rpm": 20
     }
   ]
 }
