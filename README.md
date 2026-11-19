@@ -23,7 +23,7 @@ An exploratory fourth aim is an answer key audit: flagging items where most mode
 | Element | Choice |
 |---|---|
 | Items | 48 original multiple-choice questions, 8 domains of 6, four options each |
-| Krio subset | 20 items, first translated with AI assistance (ChatGPT, 2026-11-19), with review by a native Krio speaker (the author) pending |
+| Krio subset | 20 items, drafted with AI assistance (ChatGPT) and then reviewed and corrected by a native Krio speaker (the author) |
 | Prompting | Zero-shot, temperature 0, reply with a letter only |
 | Option order | Shuffled with a fixed seed, 3 different orders per item |
 | Primary outcome | Mean item-level accuracy, with a 95% bootstrap interval over items |
@@ -95,7 +95,7 @@ No real model run has been completed yet. This section will be updated with a li
 
 - Multiple-choice agreement with an answer key measures knowledge of standard guidance. It does not measure clinical competence, safety in practice or usefulness to a health worker.
 - Forty-eight items give wide intervals. Expect roughly plus or minus 13 percentage points around an accuracy near 70%, and wider for the 20-item Krio subset.
-- Krio medical vocabulary borrows heavily from English. A gap may reflect translation choices as much as model ability. The first Krio translation was produced with an AI tool and has not yet been reviewed by a native speaker or back-translated. Machine-translated Krio may be easier or harder for models than natural Krio, so any English minus Krio gap is provisional until the translation is reviewed and a second reader is recorded in the file.
+- Krio medical vocabulary borrows heavily from English. A gap may reflect translation choices as much as model ability. The first Krio draft was produced with an AI tool and then reviewed and corrected by the author, a native speaker. It has not been back-translated or checked by a second reader. AI-drafted text may be easier or harder for models than natural Krio, so any English minus Krio gap should be read with that in mind.
 - Items follow widely published WHO guidance. Sierra Leone national protocols can differ in detail and should be checked before drawing local conclusions.
 - Models change without notice. Each report records the model string returned by the provider and the run date, and is a snapshot.
 - Original items may still resemble public material. A canary string is included, but contamination cannot be ruled out.
@@ -112,7 +112,7 @@ No real model run has been completed yet. This section will be updated with a li
 
 ## AI assistance
 
-The harness code, tests and first draft of the item bank were written with assistance from Claude (Anthropic). The items are drafts until the author approves them through the review gate. The first Krio translation was also AI-assisted (ChatGPT). Review of the Krio text, approval of the answer key and interpretation of results are the author's own.
+The harness code, tests and first draft of the item bank were written with assistance from Claude (Anthropic). The items are drafts until the author approves them through the review gate. The first Krio draft was also AI-assisted (ChatGPT). Review and correction of the Krio text, approval of the answer key and interpretation of results are the author's own.
 
 ## Ethics and safety
 
