@@ -1,9 +1,45 @@
 {
-  "_note": "Default model identifiers for free-tier access. Provider catalogues change often, so run `python -m slheval check-models` (or the evaluate workflow, which does this first) and edit the identifiers below before a real run. Add a key as a repository secret for each provider you use. Models without a key are skipped.",
+  "_note": "Model identifiers. The Gemini ids were verified on 2026-11-19 with `python -m slheval list-models` (workflow: list-models). Provider catalogues change often, so run `python -m slheval check-models` (the evaluate workflow does this first) before a real run. Models without a key are skipped. The Groq and OpenRouter ids are unverified.",
   "models": [
-    {"label": "gemini-flash", "provider": "gemini", "model": "gemini-2.5-flash", "api_key_env": "GEMINI_API_KEY", "max_tokens": 512, "rpm": 8},
-    {"label": "llama-70b-groq", "provider": "groq", "model": "llama-3.3-70b-versatile", "api_key_env": "GROQ_API_KEY", "max_tokens": 16, "rpm": 20},
-    {"label": "llama-70b-openrouter-free", "provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free", "api_key_env": "OPENROUTER_API_KEY", "max_tokens": 16, "rpm": 8},
-    {"label": "gemma-27b-openrouter-free", "provider": "openrouter", "model": "google/gemma-3-27b-it:free", "api_key_env": "OPENROUTER_API_KEY", "max_tokens": 16, "rpm": 8}
+    {
+      "label": "gemini-flash",
+      "provider": "gemini",
+      "model": "gemini-3.8-flash",
+      "api_key_env": "GEMINI_API_KEY",
+      "max_tokens": 512,
+      "rpm": 8
+    },
+    {
+      "label": "gemma-31b-gemini",
+      "provider": "gemini",
+      "model": "gemma-4-31b-it",
+      "api_key_env": "GEMINI_API_KEY",
+      "max_tokens": 512,
+      "rpm": 8
+    },
+    {
+      "label": "llama-70b-groq",
+      "provider": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "api_key_env": "GROQ_API_KEY",
+      "max_tokens": 16,
+      "rpm": 20
+    },
+    {
+      "label": "llama-70b-openrouter-free",
+      "provider": "openrouter",
+      "model": "meta-llama/llama-3.3-70b-instruct:free",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "max_tokens": 16,
+      "rpm": 8
+    },
+    {
+      "label": "gemma-27b-openrouter-free",
+      "provider": "openrouter",
+      "model": "google/gemma-3-27b-it:free",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "max_tokens": 16,
+      "rpm": 8
+    }
   ]
 }
