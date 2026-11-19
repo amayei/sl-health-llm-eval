@@ -131,7 +131,28 @@ const EMPTY = `<div class="eyebrow">Welcome</div><h1>Test an AI model on public 
 <div class="steps"><div class="step"><b class="n">1</b><h3>Start a trial run</h3><p>Open New evaluation and tick "Simulated run". It uses made-up answers so you can look around safely.</p></div>
 <div class="step"><b class="n">2</b><h3>Read the results</h3><p>The Overview, Compare models and Domains pages explain each chart in plain words.</p></div>
 <div class="step"><b class="n">3</b><h3>Run it for real</h3><p>Add an API key for a model such as ChatGPT, Claude or Gemini and run the same questions.</p></div></div>
-<button class="btn" onclick="go('run')">Start a trial run</button>`;
+<div class="row"><button class="btn" id="demo-go">Load a simulated demo (about 30 seconds)</button><button class="btn sec" onclick="go('run')">Set up my own run</button></div>
+<div id="demo-msg" class="how" aria-live="polite"></div>`;
+async function demoRun() {
+  const b = $("#demo-go"), m = $("#demo-msg"); b.disabled = true;
+  try {
+    const models = S.state.models.slice(0, 3).map((x) => ({ label: x.label }));
+    const r = await api("/api/jobs", { body: { models, bank: "builtin", mock: true, reps: 3, run_id: "demo-" + Date.now().toString(36) } });
+    S.running = true;
+    for (;;) {
+      const j = await api(`/api/jobs/${r.job_id}`);
+      const done = Object.values(j.progress).reduce((t, v) => t + v.calls, 0), total = (j.expected || 0) * (j.n_models || 1);
+      m.innerHTML = `<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${total ? Math.round(done / total * 100) : 0}"><div style="width:${total ? Math.round(done / total * 100) : 0}%"></div></div>Building simulated results: ${done} of ${total || "…"} answers.`;
+      if (j.status !== "running") {
+        S.running = false;
+        if (j.status === "done") { S.state = await api("/api/state"); S.sel = `local/${j.run_id}`; S.run = null; go("overview"); }
+        else { m.innerHTML = `<div class="note bad">The demo did not finish. Open New evaluation to try again.</div>`; b.disabled = false; }
+        return;
+      }
+      await new Promise((ok) => setTimeout(ok, 700));
+    }
+  } catch (e) { S.running = false; m.innerHTML = `<div class="note bad">${esc(e.message)}</div>`; b.disabled = false; }
+}
 
 /* ---------- provenance ---------- */
 function provenance(run) {
@@ -168,7 +189,7 @@ function headline(run) {
 }
 async function viewOverview() {
   const run = await loadRun();
-  if (!run) { $("#main").innerHTML = EMPTY; setBanner(null); return; }
+  if (!run) { $("#main").innerHTML = EMPTY; $("#demo-go").onclick = demoRun; setBanner(null); return; }
   const sm = run.summary, en = sm.english, { names } = ranked(en);
   const worst = Math.max(...names.map((n) => en[n].unparsed_rate || 0));
   const failed = names.reduce((a, n) => a + (en[n].failed_calls || 0), 0);
@@ -197,7 +218,7 @@ async function viewOverview() {
 /* ---------- 02 compare ---------- */
 async function viewCompare() {
   const run = await loadRun();
-  if (!run) { $("#main").innerHTML = EMPTY; return; }
+  if (!run) { $("#main").innerHTML = EMPTY; $("#demo-go").onclick = demoRun; return; }
   const sm = run.summary, en = sm.english, { names, tied } = ranked(en);
   const rows = names.map((n, i) => { const m = en[n]; return `<tr><td><strong>${i + 1}. ${esc(n)}</strong></td><td class="n">${pct(m.accuracy)}</td><td class="n">${pct(m.ci_low)} to ${pct(m.ci_high)}</td><td>${tied.includes(n) && i > 0 ? '<span class="tag warn">overlaps the top model</span>' : i === 0 ? '<span class="tag ok">highest</span>' : '<span class="tag">separated from top</span>'}</td><td class="n">${m.consistency == null ? "needs 2+ reps" : pct(m.consistency)}</td><td class="n">${pct(m.top_letter_share)}</td><td>${m.top_letter_share > 0.4 ? '<span class="tag warn">position bias likely</span>' : '<span class="tag">no strong bias</span>'}</td></tr>`; }).join("");
   const kk = Object.keys(sm.krio || {});
@@ -212,7 +233,7 @@ async function viewCompare() {
 /* ---------- 03 domains ---------- */
 async function viewDomains() {
   const run = await loadRun();
-  if (!run) { $("#main").innerHTML = EMPTY; return; }
+  if (!run) { $("#main").innerHTML = EMPTY; $("#demo-go").onclick = demoRun; return; }
   const en = run.summary.english;
   $("#main").innerHTML = `<div class="eyebrow">Domains</div><h1>Where models are strong or weak</h1>
   <p class="lead">Each domain holds about six items, so one item moves a cell by about 17 points. Use this to find areas to examine, not to rank models.</p>
@@ -222,7 +243,7 @@ async function viewDomains() {
 /* ---------- 04 explorer ---------- */
 async function viewExplorer() {
   const run = await loadRun();
-  if (!run) { $("#main").innerHTML = EMPTY; return; }
+  if (!run) { $("#main").innerHTML = EMPTY; $("#demo-go").onclick = demoRun; return; }
   const [source, id] = S.sel.split("/");
   const hasKri = Object.keys(run.summary.krio || {}).length > 0;
   if (!hasKri) S.cond = "en";
@@ -266,7 +287,7 @@ async function viewExplorer() {
 /* ---------- 05 partner summary ---------- */
 async function viewSummary() {
   const run = await loadRun();
-  if (!run) { $("#main").innerHTML = EMPTY; return; }
+  if (!run) { $("#main").innerHTML = EMPTY; $("#demo-go").onclick = demoRun; return; }
   const sm = run.summary, en = sm.english, { names, tied } = ranked(en), meta = run.meta;
   const drafts = meta.item_status_counts?.draft || 0, au = sm.audit || { consensus_against_key: [], never_correct: [] };
   const caveats = [

@@ -1,6 +1,6 @@
 [Setup]
 AppName=SL-Health-LLM-Eval Workbench
-AppVersion=0.1.0
+AppVersion=0.1.5
 DefaultDirName={autopf}\SL-Health-LLM-Eval-Workbench
 DefaultGroupName=SL-Health-LLM-Eval Workbench
 OutputBaseFilename=SL-Health-LLM-Eval-Workbench-Setup

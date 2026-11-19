@@ -40,7 +40,7 @@ from slheval.providers import MockProvider, make_provider
 from slheval.run import make_meta, run_model, write_meta
 from slheval.stats import DEFAULT_SEED
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.5"
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 BANK_NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,48}$")
 MAX_BODY = 5 * 1024 * 1024
