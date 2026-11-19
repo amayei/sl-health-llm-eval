@@ -16,6 +16,10 @@ on:
         description: "Option-order repetitions per item"
         required: false
         default: "3"
+      limit:
+        description: "Only the first N items per condition (for quick tests; leave blank for a full run)"
+        required: false
+        default: ""
       allow_drafts:
         description: "Allow a provisional run with items the author has not approved"
         type: boolean
@@ -38,6 +42,7 @@ jobs:
       MODELS: ${{ inputs.models }}
       REPS: ${{ inputs.reps }}
       ALLOW_DRAFTS: ${{ inputs.allow_drafts }}
+      LIMIT: ${{ inputs.limit }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -58,7 +63,9 @@ jobs:
         run: |
           FLAGS=""
           if [ "$ALLOW_DRAFTS" = "true" ]; then FLAGS="--allow-drafts"; fi
-          python -u -m slheval run --run-id "$RUN_ID" --models "$MODELS" --reps "$REPS" $FLAGS
+          LIM=""
+          if [ -n "$LIMIT" ]; then LIM="--limit $LIMIT"; fi
+          python -u -m slheval run --run-id "$RUN_ID" --models "$MODELS" --reps "$REPS" $FLAGS $LIM
       - name: Analyse
         run: python -m slheval analyse --run-id "$RUN_ID"
       - uses: actions/upload-artifact@v4
