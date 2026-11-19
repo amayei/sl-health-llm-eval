@@ -136,8 +136,13 @@ def cmd_list_models(a):
         if not key and provider != "openrouter":
             print(f"## {provider}: {env} is not set")
             continue
+        if key:
+            # Non-secret diagnostics only: length, stray whitespace and the public key prefix.
+            prefix = {"anthropic": "sk-ant-", "openai": "sk-", "groq": "gsk_", "openrouter": "sk-or-", "gemini": "AIza"}[provider]
+            print(f"## {provider} key check: length={len(key)}, whitespace_or_quotes={key != key.strip() or any(c in key for c in ' \n\"\'')}, "
+                  f"expected_prefix_ok={key.strip().startswith(prefix)}")
         try:
-            names = list_provider_models(provider, key or "")
+            names = list_provider_models(provider, (key or "").strip())
         except Exception as err:  # keep going so one failing provider does not hide the others
             print(f"## {provider}: could not list models ({str(err)[:120]})")
             continue
