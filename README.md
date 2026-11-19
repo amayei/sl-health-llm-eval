@@ -93,7 +93,7 @@ The English versus Krio comparison is reported only when at least 15 items have 
 
 ## Results
 
-No real model run has been completed yet. This section will be updated with a link to the first report, whatever it shows.
+No real model run has been completed yet. A first attempt on 2026-11-19 stopped because the OpenAI account had no credits and the Gemini key had reached its quota. No scores from that attempt are published. The first report will be linked here, whatever it shows. Free-tier options (Groq, OpenRouter, Gemini) and a Claude key are the planned routes.
 
 ## Limitations
 
