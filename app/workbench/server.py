@@ -23,7 +23,7 @@ import uuid
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from slheval import __version__ as HARNESS_VERSION
 from slheval.analyse import analyse_run
@@ -158,6 +158,43 @@ class Workbench:
                     "report_md": (outd / "REPORT.md").read_text(encoding="utf-8") if (outd / "REPORT.md").exists() else "",
                 }
         raise KeyError("run not found")
+
+    def run_items(self, source, run_id, condition="en"):
+        """Per-item, per-model results for the item explorer."""
+        if source not in ("published", "local") or not RUN_ID_RE.match(run_id):
+            raise KeyError("run not found")
+        for s, rid, raw, outd in self._run_dirs():
+            if s == source and rid == run_id:
+                items = {it["id"]: it for it in self.bank_for_run(raw)}
+                models, table = [], {}
+                for f in sorted(Path(raw).glob("*.jsonl")):
+                    label = f.stem
+                    models.append(label)
+                    for rec in read_jsonl(f):
+                        if rec.get("error") or rec.get("condition") != condition or rec["item_id"] not in items:
+                            continue
+                        cell = table.setdefault(rec["item_id"], {}).setdefault(label, {"calls": 0, "correct": 0, "picks": [0, 0, 0, 0], "unparsed": 0})
+                        cell["calls"] += 1
+                        cell["correct"] += 1 if rec.get("correct") else 0
+                        if rec.get("chosen_index") is None:
+                            cell["unparsed"] += 1
+                        else:
+                            cell["picks"][rec["chosen_index"]] += 1
+                rows = []
+                for iid, it in items.items():
+                    cells = table.get(iid, {})
+                    rows.append({"id": iid, "domain": it["domain"], "question": it["question"], "options": it["options"],
+                                 "answer": it["answer"], "models": cells})
+                return {"models": models, "items": rows}
+        raise KeyError("run not found")
+
+    def bank_for_run(self, raw):
+        meta = self._meta(raw)
+        bank = (meta.get("args") or {}).get("bank") or "builtin"
+        try:
+            return self.bank_items(bank)[0]
+        except ValueError:
+            return self.load_items()
 
     # ----- item banks -----
     def import_bank(self, name, text, fmt, confirm_reviewed):
@@ -454,6 +491,10 @@ def make_handler(wb: Workbench, port_holder):
                 m = re.match(r"^/api/run/(published|local)/([^/]+)$", path)
                 if m:
                     return self._send(200, wb.get_run(m.group(1), unquote(m.group(2))))
+                m = re.match(r"^/api/run/(published|local)/([^/]+)/items$", path)
+                if m:
+                    q = parse_qs(urlparse(self.path).query)
+                    return self._send(200, wb.run_items(m.group(1), unquote(m.group(2)), (q.get("condition") or ["en"])[0]))
                 m = re.match(r"^/api/export/(published|local)/([^/]+)\.html$", path)
                 if m:
                     run = wb.get_run(m.group(1), unquote(m.group(2)))

@@ -145,3 +145,18 @@ def test_clean_nan_and_markdown():
 def test_parse_bank_rejects_unknown_format():
     with pytest.raises(ValueError):
         parse_bank("x", "xml", False)
+
+
+def test_run_items_endpoint(server):
+    wb, port = server
+    r = wb.start_job({"run_id": "e1", "reps": 2, "mock": True, "models": [{"label": "gemini-flash"}, {"label": "gemma-31b-gemini"}]})
+    wait(wb, r["job_id"])
+    code, body = call(port, "/api/run/local/e1/items?condition=en", token=wb.token)
+    data = json.loads(body)
+    assert code == 200 and set(data["models"]) == {"gemini-flash", "gemma-31b-gemini"}
+    assert len(data["items"]) == 48
+    cell = data["items"][0]["models"]["gemini-flash"]
+    assert cell["calls"] == 2 and sum(cell["picks"]) + cell["unparsed"] == 2
+    code, body = call(port, "/api/run/local/e1/items?condition=kri", token=wb.token)
+    assert code == 200 and any(i["models"] for i in json.loads(body)["items"])
+    assert call(port, "/api/run/local/..%2fx/items", token=wb.token)[0] == 404

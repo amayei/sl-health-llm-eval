@@ -1,26 +1,40 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SL-Health-LLM-Eval Workbench</title>
 <link rel="stylesheet" href="/style.css">
+<script src="/theme.js"></script>
 </head>
 <body>
 <meta name="wb-token" content="__WB_TOKEN__">
-<header class="top">
-  <div class="brand"><span class="logo" aria-hidden="true">SL</span>
-    <div><strong>Evaluation Workbench</strong><small>Pre-deployment evaluation of AI tools for health. Version __APP_VERSION__</small></div></div>
-  <nav id="nav" aria-label="Sections">
-    <button data-view="dashboard" class="on">Dashboard</button>
-    <button data-view="items">Item bank</button>
-    <button data-view="run">New evaluation</button>
-    <button data-view="help">Guide</button>
-  </nav>
-</header>
-<div id="banner" class="banner" hidden></div>
-<main id="main" tabindex="-1"></main>
-<footer class="foot">Runs locally. API keys stay in memory and are never saved. An evaluation harness for a pilot, not a clinical decision tool.</footer>
+<div class="shell">
+  <aside class="side" aria-label="Main">
+    <div class="brand"><span class="logo" aria-hidden="true">SL</span>
+      <div><strong>Evaluation Workbench</strong><small>Version __APP_VERSION__ pilot</small></div></div>
+    <nav id="nav">
+      <button data-view="overview" class="on"><i>01</i>Overview</button>
+      <button data-view="compare"><i>02</i>Compare models</button>
+      <button data-view="domains"><i>03</i>Domains</button>
+      <button data-view="explorer"><i>04</i>Item explorer</button>
+      <button data-view="summary"><i>05</i>Partner summary</button>
+      <hr>
+      <button data-view="run"><i>+</i>New evaluation</button>
+      <button data-view="items"><i>Q</i>Item bank</button>
+      <button data-view="help"><i>?</i>Guide</button>
+    </nav>
+    <div class="side-foot">
+      <div class="seg" role="group" aria-label="Theme"><button id="th-light" data-theme-set="light">Light</button><button id="th-dark" data-theme-set="dark">Dark</button></div>
+      <p>Runs on this computer. Keys stay in memory. A pilot evaluation tool, not for clinical decisions.</p>
+    </div>
+  </aside>
+  <div class="content">
+    <div id="banner" class="banner" hidden></div>
+    <div class="runbar noprint" id="runbar"></div>
+    <main id="main" tabindex="-1"></main>
+  </div>
+</div>
 <script src="/app.js"></script>
 </body>
 </html>
