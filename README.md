@@ -45,6 +45,10 @@ results/<run_id>/        report, summary and figures for each run
 .github/workflows/       tests on every push; manual evaluation workflow
 ```
 
+## Desktop workbench
+
+A Windows desktop application wraps the harness with a dashboard (accuracy with intervals, domain view, order consistency, English and Krio gap, answer-key audit), an item browser, a run launcher and HTML report export. It runs locally and keeps API keys in memory only. Build and install notes are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md); see [docs/](docs/README.md) for the user guide, method, privacy notes, limitations and a partner brief. Start from source with `python -m app.main`.
+
 ## Reproduce
 
 The harness uses only the Python standard library, plus matplotlib for figures.

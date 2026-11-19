@@ -120,7 +120,7 @@ async function viewDashboard() {
   </div>
   <div class="card" style="margin-top:14px"><h2>Robustness checks</h2><table><thead><tr><th>Model</th><th class="n">Order consistency</th><th class="n">Most-chosen letter share</th><th class="n">Failed calls</th><th>Reading</th></tr></thead><tbody>` +
     names.map((n) => { const m = en[n]; const flag = m.top_letter_share > 0.4 ? "<span class='tag warn'>position bias likely</span>" : "<span class='tag'>no strong bias</span>"; return `<tr><td>${esc(n)}</td><td class="n">${m.consistency == null ? "needs 2+ repetitions" : pct(m.consistency)}</td><td class="n">${pct(m.top_letter_share)}</td><td class="n">${m.failed_calls}</td><td>${flag}</td></tr>`; }).join("") +
-    `</tbody></table><div class="legend"><span>Order consistency: share of items where the model picks the same content when option order changes. A letter share near 25% suggests no position preference.</span></div></div>
+    `</tbody></table><div class="legend"><span>Order consistency: average share of repetitions that choose the same content when option order changes (1.0 = always the same). A letter share near 25% suggests no position preference.</span></div></div>
   <div style="margin-top:14px" class="grid">${krio}${audit}</div>`;
   $("#runsel").onchange = (e) => { S.sel = e.target.value; render(); };
   $("#exp").onclick = () => download(`/api/export/${source}/${encodeURIComponent(id)}.html`, `report-${id}.html`);
