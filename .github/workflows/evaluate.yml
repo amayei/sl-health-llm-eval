@@ -58,7 +58,7 @@ jobs:
         run: |
           FLAGS=""
           if [ "$ALLOW_DRAFTS" = "true" ]; then FLAGS="--allow-drafts"; fi
-          python -m slheval run --run-id "$RUN_ID" --models "$MODELS" --reps "$REPS" $FLAGS
+          python -u -m slheval run --run-id "$RUN_ID" --models "$MODELS" --reps "$REPS" $FLAGS
       - name: Analyse
         run: python -m slheval analyse --run-id "$RUN_ID"
       - uses: actions/upload-artifact@v4
@@ -71,4 +71,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add results/
           git commit -m "Add results for run $RUN_ID" || echo "nothing to commit"
+          git pull --rebase origin main
           git push

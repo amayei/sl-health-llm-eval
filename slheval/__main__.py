@@ -188,11 +188,30 @@ def cmd_run(a):
     run_dir.mkdir(parents=True, exist_ok=True)
     args_dict = {k: v for k, v in vars(a).items() if k != "fn"}
     write_meta(run_dir, make_meta(args_dict, file_sha256(a.items), status_counts(items), cfgs, a.mock))
-    for cfg in cfgs:
-        provider = MockProvider(cfg["label"]) if a.mock else make_provider(cfg, os.environ[cfg["api_key_env"]])
-        print(f"running {cfg['label']} ({cfg['model']})")
-        calls, failures = run_model(cfg, provider, conditions, run_dir, a.reps, a.seed, a.limit, a.mock)
-        print(f"  done: {calls} new calls, {failures} failed")
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    lock = threading.Lock()
+
+    def work(cfg):
+        label = cfg["label"]
+        provider = MockProvider(label) if a.mock else make_provider(cfg, os.environ[cfg["api_key_env"]])
+
+        def say(msg):
+            with lock:
+                print(f"[{label}] {msg}", flush=True)
+
+        def tick(_label, calls, failures):
+            if calls % 25 == 0:
+                say(f"{calls} calls, {failures} failed")
+
+        say(f"running {cfg['model']}")
+        calls, failures = run_model(cfg, provider, conditions, run_dir, a.reps, a.seed, a.limit, a.mock, log=say, progress=tick)
+        say(f"done: {calls} new calls, {failures} failed")
+        return label, calls, failures
+
+    # Models are independent (separate files, separate rate limits), so run them in parallel.
+    with ThreadPoolExecutor(max_workers=len(cfgs)) as pool:
+        list(pool.map(work, cfgs))
     print(f"raw logs in {run_dir}")
     return 0
 
