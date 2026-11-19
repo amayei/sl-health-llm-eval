@@ -231,7 +231,7 @@ class Workbench:
         if not models:
             raise ValueError("Select at least one model, and enter its API key.")
         job_id = uuid.uuid4().hex[:12]
-        job = {"id": job_id, "run_id": run_id, "status": "running", "log": [], "progress": {}, "error": None,
+        job = {"id": job_id, "run_id": run_id, "n_models": len(models), "status": "running", "log": [], "progress": {}, "error": None,
                "started": time.time(), "stop": False}
         with self.lock:
             self.jobs[job_id] = job
@@ -281,6 +281,7 @@ class Workbench:
             write_meta(raw, make_meta(args, sha, status_counts(items), clean_cfgs, mock))
             limit = params.get("limit")
             limit = int(limit) if limit else None
+            job["expected"] = sum(len(its[:limit] if limit else its) for _, its in conditions) * reps
             for cfg, key in models:
                 if job["stop"]:
                     break
@@ -312,7 +313,10 @@ class Workbench:
         job = self.jobs.get(job_id)
         if not job:
             raise KeyError("job not found")
-        return {k: job[k] for k in ("id", "run_id", "status", "log", "progress", "error")}
+        view = {k: job[k] for k in ("id", "run_id", "status", "log", "progress", "error")}
+        view["expected"] = job.get("expected")
+        view["n_models"] = job.get("n_models")
+        return view
 
     def stop_job(self, job_id):
         job = self.jobs.get(job_id)

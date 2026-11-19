@@ -63,7 +63,7 @@ function leaderboard(en) {
   const x = (v) => pad.l + v * (W - pad.l - pad.r);
   let g = "";
   for (let t = 0; t <= 1.0001; t += 0.25) g += `<line class="g" x1="${x(t)}" x2="${x(t)}" y1="${pad.t - 8}" y2="${H - pad.b}"/><text class="m" x="${x(t)}" y="${H - 12}" text-anchor="middle">${Math.round(t * 100)}%</text>`;
-  g += `<line x1="${x(.25)}" x2="${x(.25)}" y1="${pad.t - 8}" y2="${H - pad.b}" stroke="var(--accent)" stroke-dasharray="5 4"/><text x="${x(.25) + 4}" y="${pad.t - 12}" style="fill:var(--accent)">chance</text>`;
+  g += `<line x1="${x(.25)}" x2="${x(.25)}" y1="${pad.t - 8}" y2="${H - pad.b}" stroke="var(--mute)" stroke-dasharray="5 4"/><text x="${x(.25) + 4}" y="${pad.t - 12}" class="m">chance</text>`;
   names.forEach((n, i) => {
     const m = en[n], y = pad.t + i * rowH + rowH / 2, idx = order.indexOf(n);
     g += `<text x="${pad.l - 14}" y="${y + 4}" text-anchor="end" font-weight="600">${i + 1}. ${esc(n)}</text>`;
@@ -126,7 +126,11 @@ function runbar() {
   $("#runsel").onchange = (e) => { S.sel = e.target.value; render(); };
   $("#exp").onclick = () => { const [s, i] = S.sel.split("/"); download(`/api/export/${s}/${encodeURIComponent(i)}.html`, `report-${i}.html`); };
 }
-const EMPTY = `<h1>No runs yet</h1><div class="card"><p>Start one under <strong>New evaluation</strong>. A simulated run needs no API key and lets you explore every screen.</p><button class="btn" onclick="go('run')">New evaluation</button></div>`;
+const EMPTY = `<div class="eyebrow">Welcome</div><h1>Test an AI model on public health questions</h1><p class="lead">Three steps. No technical setup needed to try it.</p>
+<div class="steps"><div class="step"><b class="n">1</b><h3>Start a trial run</h3><p>Open New evaluation and tick "Simulated run". It uses made-up answers so you can look around safely.</p></div>
+<div class="step"><b class="n">2</b><h3>Read the results</h3><p>The Overview, Compare models and Domains pages explain each chart in plain words.</p></div>
+<div class="step"><b class="n">3</b><h3>Run it for real</h3><p>Add an API key for a model such as ChatGPT, Claude or Gemini and run the same questions.</p></div></div>
+<button class="btn" onclick="go('run')">Start a trial run</button>`;
 
 /* ---------- 01 overview ---------- */
 function headline(run) {
@@ -154,7 +158,7 @@ async function viewOverview() {
     <div class="card kpi"><div class="l">Failed calls</div><div class="v">${failed}</div><div class="s">Errors excluded from accuracy, shown here</div></div>
   </div>
   <div class="grid" style="margin-top:16px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)">
-    <div class="card"><h2>Ranking with uncertainty</h2>${leaderboard(en)}</div>
+    <div class="card"><h2>Ranking with uncertainty</h2>${leaderboard(en)}<details class="how"><summary>How to read this chart</summary><p>Each marker is a model's average score. The band around it shows the range the true score plausibly falls in, given only ${en[names[0]].n_items} questions. If two bands overlap, treat the models as equal.</p></details></div>
     <div class="card"><h2>Items to review</h2>
       <p class="lead">Items where most models agree against the key may have a key error or an ambiguous stem. A person decides.</p>
       ${au.consensus_against_key.length ? `<table><thead><tr><th>Item</th><th>Key</th><th>Models chose</th></tr></thead><tbody>${au.consensus_against_key.map((a) => `<tr><td><button class="link" data-item="${esc(a.id)}">${esc(a.id)}</button></td><td>${esc(a.key)}</td><td>${esc(a.consensus)} (${esc(a.models_agreeing)} of ${esc(a.models)})</td></tr>`).join("")}</tbody></table>` : "<p>No item flagged. With fewer than 3 models the audit cannot flag items.</p>"}
@@ -185,7 +189,7 @@ async function viewDomains() {
   const en = run.summary.english;
   $("#main").innerHTML = `<div class="eyebrow">Domains</div><h1>Where models are strong or weak</h1>
   <p class="lead">Each domain holds about six items, so one item moves a cell by about 17 points. Use this to find areas to examine, not to rank models.</p>
-  <div class="grid cols2"><div class="card"><h2>Radar</h2>${radar(en)}</div><div class="card"><h2>Heatmap</h2>${heat(en)}</div></div>`;
+  <div class="grid cols2"><div class="card"><h2>Radar</h2>${radar(en)}<details class="how"><summary>How to read this chart</summary><p>Each corner is a topic. The further a shape reaches toward the edge, the more questions that model answered correctly in that topic.</p></details></div><div class="card"><h2>Heatmap</h2>${heat(en)}<details class="how"><summary>How to read this table</summary><p>Darker blue means a higher share correct. Each topic has few questions, so a single question can change a cell a lot.</p></details></div></div>`;
 }
 
 /* ---------- 04 explorer ---------- */
@@ -292,8 +296,9 @@ function viewRun() {
   const banks = st.banks.map((b) => `<option value="${esc(b.name)}">${esc(b.label)}, ${b.n_items} items</option>`).join("");
   const models = st.models.map((m, i) => `<div class="card" style="margin-bottom:10px;padding:12px 14px"><label class="chk" style="margin:0"><input type="checkbox" class="msel" data-i="${i}"><span><strong>${esc(m.label)}</strong> <small class="lead">${esc(m.provider)} / ${esc(m.model)}</small></span></label>
      <input type="password" class="mkey" data-i="${i}" placeholder="API key (${esc(m.key_name)}), kept in memory only" autocomplete="off"></div>`).join("");
-  $("#main").innerHTML = `<div class="eyebrow">New evaluation</div><h1>Run the protocol</h1><p class="lead">Zero-shot, temperature 0, shuffled option orders. Same protocol as the published benchmark.</p>
-  <div class="grid cols2"><div class="card"><h2>1. Item bank</h2><select id="bank">${banks}</select>
+  $("#main").innerHTML = `<div class="eyebrow">New evaluation</div><h1>Run the protocol</h1><p class="lead">The same questions are asked of every model, with the answer options shuffled, so results can be compared fairly.</p>
+  <div class="crumbs"><span class="on">1 Choose questions</span><span class="on">2 Choose models</span><span>3 Start and watch progress</span></div>
+  <div class="grid cols2"><div class="card"><h2>1. Questions</h2><select id="bank">${banks}</select>
     <label class="chk"><input type="checkbox" id="mock"><span>Simulated run (random answers, no API key, for exploring the interface only)</span></label>
     ${drafts ? `<label class="chk"><input type="checkbox" id="drafts"><span>Provisional run: allow unapproved items (${drafts} draft). Results will be labelled provisional.</span></label>` : ""}
     <label for="rid">Run name</label><input id="rid" type="text" placeholder="for example pilot-1">
@@ -337,7 +342,8 @@ async function startJob() {
 async function poll() {
   const j = await api(`/api/jobs/${S.job}`);
   $("#log").textContent = j.log.join("\n");
-  $("#prog").innerHTML = Object.entries(j.progress).map(([k, v]) => `<div>${esc(k)}: ${v.calls} calls, ${v.failures} failed</div>`).join("");
+  const done = Object.values(j.progress).reduce((t, v) => t + v.calls, 0), total = (j.expected || 0) * (j.n_models || 1), p = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  $("#prog").innerHTML = `${total ? `<div class="progress" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><div style="width:${p}%"></div></div><div><strong>${p}%</strong> done (${done} of ${total} answers)</div>` : ""}` + Object.entries(j.progress).map(([k, v]) => `<div>${esc(k)}: ${v.calls} answers, ${v.failures} failed</div>`).join("");
   if (j.status === "running") { S.timer = setTimeout(poll, 1000); return; }
   $("#go").disabled = false; $("#stop").hidden = true;
   if (j.status === "done") {
