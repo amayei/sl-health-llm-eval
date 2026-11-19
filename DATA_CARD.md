@@ -28,7 +28,7 @@ Drafting used AI assistance. Items are not treated as valid until the author app
 
 ## Krio versions
 
-Created by the author, a native Krio speaker, through `slheval krio-template` and `slheval krio-import`. Option order must match the English file. The file records the translator and, where available, a second reader. Where no second reader is recorded, the translation has not been independently checked.
+First translated with AI assistance (ChatGPT, 2026-11-19), then imported through `slheval krio-template` and `slheval krio-import`. Review by the author, a native Krio speaker, is pending. The translator field in the data records the AI-assisted origin. Option order must match the English file. The file records the translator and, where available, a second reader. Where no second reader is recorded, the translation has not been independently checked.
 
 ## Known issues
 

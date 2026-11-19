@@ -17,12 +17,13 @@ Threats to construct validity, stated in advance:
 - Multiple-choice format allows elimination strategies that real tasks do not.
 - Items test guidance as published by international bodies. National protocols may differ.
 - Krio items test the translation as well as the model.
+- The first Krio translation was machine-generated and may differ in naturalness from the language of health workers. Results are labelled provisional until the translation is reviewed by a native speaker.
 - Items were drafted with AI assistance, so they may resemble the style of model-generated text.
 
 ## 3. Materials
 
 - **Item bank:** 48 original items, 8 domains with 6 items each, 4 options, one correct. Correct answers are balanced across positions A to D (12 each) in the file. Each item has a topic-level source anchor.
-- **Krio subset:** 20 items flagged in the item bank, translated into Krio by the author. Option order matches the English file.
+- **Krio subset:** 20 items flagged in the item bank, translated into Krio. The first translation was AI-assisted (ChatGPT, 2026-11-19) and is to be reviewed by the author, a native Krio speaker. Option order matches the English file.
 - **Models:** those listed in `config/models.json` that are reachable with free-tier keys on the run date. The exact model string returned by each provider is recorded.
 
 ## 4. Procedure
@@ -76,4 +77,4 @@ No human participants and no patient data. The study evaluates software on publi
 
 | Date | Change | Reason |
 |---|---|---|
-| | | |
+| 2026-11-19 | Krio subset translated with AI assistance (ChatGPT) instead of by the author | Time. Author review of the Krio text is pending. Krio results are labelled provisional until review. |
