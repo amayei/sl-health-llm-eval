@@ -96,6 +96,78 @@ class OpenAICompatProvider:
         }
 
 
+class OpenAIProvider:
+    """OpenAI Chat Completions. Newer models take max_completion_tokens and may reject temperature."""
+
+    URL = "https://api.openai.com/v1/chat/completions"
+
+    def __init__(self, model, api_key, max_tokens=16):
+        self.model, self.api_key, self.max_tokens = model, api_key, max_tokens
+
+    def _body(self, system, user, with_temperature):
+        body = {
+            "model": self.model,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            "max_completion_tokens": self.max_tokens,
+        }
+        if with_temperature:
+            body["temperature"] = 0
+        return body
+
+    def complete(self, system, user):
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        note_extra = None
+        try:
+            data = _post_json(self.URL, headers, self._body(system, user, True))
+        except ProviderError as err:
+            if "temperature" not in str(err).lower():
+                raise
+            data = _post_json(self.URL, headers, self._body(system, user, False))
+            note_extra = "temperature_not_supported"
+        choices = data.get("choices") or []
+        if not choices:
+            return {"text": "", "model_returned": data.get("model"), "note": "no_choices"}
+        message = choices[0].get("message") or {}
+        return {
+            "text": message.get("content") or "",
+            "model_returned": data.get("model"),
+            "note": note_extra or choices[0].get("finish_reason"),
+        }
+
+
+class AnthropicProvider:
+    """Anthropic Messages API."""
+
+    URL = "https://api.anthropic.com/v1/messages"
+
+    def __init__(self, model, api_key, max_tokens=16):
+        self.model, self.api_key, self.max_tokens = model, api_key, max_tokens
+
+    def _body(self, system, user, with_temperature):
+        body = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+        }
+        if with_temperature:
+            body["temperature"] = 0
+        return body
+
+    def complete(self, system, user):
+        headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01"}
+        note_extra = None
+        try:
+            data = _post_json(self.URL, headers, self._body(system, user, True))
+        except ProviderError as err:
+            if "temperature" not in str(err).lower():
+                raise
+            data = _post_json(self.URL, headers, self._body(system, user, False))
+            note_extra = "temperature_not_supported"
+        text = "".join(b.get("text", "") for b in data.get("content") or [] if b.get("type") == "text")
+        return {"text": text, "model_returned": data.get("model"), "note": note_extra or data.get("stop_reason")}
+
+
 class MockProvider:
     """Pseudo-random answers. For testing the pipeline only. Never used for reported results."""
 
@@ -112,6 +184,10 @@ def make_provider(cfg, api_key):
     max_tokens = int(cfg.get("max_tokens", 16))
     if kind == "gemini":
         return GeminiProvider(cfg["model"], api_key, max_tokens)
+    if kind == "openai":
+        return OpenAIProvider(cfg["model"], api_key, max_tokens)
+    if kind == "anthropic":
+        return AnthropicProvider(cfg["model"], api_key, max_tokens)
     if kind in OPENAI_COMPAT_URLS:
         return OpenAICompatProvider(kind, cfg["model"], api_key, max_tokens)
     if kind == "custom":
@@ -162,3 +238,22 @@ def list_gemini_models(api_key):
         token = data.get("nextPageToken", "")
         if not token:
             return sorted(names)
+
+
+def list_provider_models(provider, api_key):
+    """Model ids a key can see, for providers with a models endpoint."""
+    import json
+    import urllib.request
+    specs = {
+        "openai": ("https://api.openai.com/v1/models", {"Authorization": f"Bearer {api_key}"}),
+        "groq": ("https://api.groq.com/openai/v1/models", {"Authorization": f"Bearer {api_key}"}),
+        "openrouter": ("https://openrouter.ai/api/v1/models", {}),
+        "anthropic": ("https://api.anthropic.com/v1/models?limit=100", {"x-api-key": api_key, "anthropic-version": "2023-06-01"}),
+    }
+    if provider == "gemini":
+        return list_gemini_models(api_key)
+    url, headers = specs[provider]
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    return sorted(m["id"] for m in data.get("data", []))

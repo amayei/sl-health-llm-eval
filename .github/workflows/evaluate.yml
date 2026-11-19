@@ -1,7 +1,7 @@
 name: evaluate
 
 # Manual run. Add API keys as repository secrets first (Settings, Secrets and variables, Actions):
-# GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY. Models without a key are skipped.
+# GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY. Models without a key are skipped.
 on:
   workflow_dispatch:
     inputs:
@@ -31,6 +31,8 @@ jobs:
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       RUN_ID: ${{ inputs.run_id }}
       MODELS: ${{ inputs.models }}

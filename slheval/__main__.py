@@ -20,7 +20,7 @@ from .data import (
     validate_krio,
     write_jsonl,
 )
-from .providers import MockProvider, check_models, list_gemini_models, make_provider, runnable
+from .providers import MockProvider, check_models, list_provider_models, make_provider, runnable
 from .run import make_meta, run_model, write_meta
 from .stats import DEFAULT_SEED
 
@@ -128,13 +128,24 @@ def cmd_check_models(a):
 
 
 def cmd_list_models(a):
-    key = os.environ.get("GEMINI_API_KEY")
-    if not key:
-        print("GEMINI_API_KEY is not set")
-        return 1
-    for name in list_gemini_models(key):
-        print(name)
-    return 0
+    """Print model ids visible to each configured key. Ids only, never keys."""
+    shown = False
+    for provider, env in (("gemini", "GEMINI_API_KEY"), ("openai", "OPENAI_API_KEY"), ("anthropic", "ANTHROPIC_API_KEY"),
+                          ("groq", "GROQ_API_KEY"), ("openrouter", "OPENROUTER_API_KEY")):
+        key = os.environ.get(env)
+        if not key and provider != "openrouter":
+            print(f"## {provider}: {env} is not set")
+            continue
+        try:
+            names = list_provider_models(provider, key or "")
+        except Exception as err:  # keep going so one failing provider does not hide the others
+            print(f"## {provider}: could not list models ({str(err)[:120]})")
+            continue
+        shown = True
+        print(f"## {provider}")
+        for name in names:
+            print(name)
+    return 0 if shown else 1
 
 
 def cmd_run(a):

@@ -16,6 +16,6 @@
 
 **Does it work in Krio?** A 20-item Krio subset is included. It is small and reviewed by one speaker.
 
-**Which models are supported?** Gemini, Groq, OpenRouter, and any OpenAI-compatible endpoint. Free-tier model availability changes, so verify ids.
+**Which models are supported?** Gemini, OpenAI (ChatGPT family), Anthropic (Claude family), Groq, OpenRouter, and any OpenAI-compatible endpoint. Model availability changes, so verify ids with the list-models workflow. See the user guide for how ChatGPT and Claude are included.
 
 **Who maintains it?** Alhassan Mayei. Issues and suggestions are welcome in the repository.

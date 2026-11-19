@@ -86,14 +86,14 @@ function radar(en) {
   g += `<text class="m" x="${cx + 4}" y="${cy - R * .25 - 3}" font-size="10">25%</text><text class="m" x="${cx + 4}" y="${cy - R - 3}" font-size="10">100%</text>`;
   domains.forEach((d, i) => {
     const [x, y] = pt(i, 1.12), a = x < cx - 8 ? "end" : x > cx + 8 ? "start" : "middle";
-    g += `<line x1="${cx}" y1="${cy}" x2="${pt(i, 1)[0]}" y2="${pt(i, 1)[1]}" stroke="var(--line)"/><text x="${x}" y="${y + 4}" text-anchor="${a}" font-size="11">${esc(d.length > 28 ? d.slice(0, 27) + "…" : d)}</text>`;
+    g += `<line x1="${cx}" y1="${cy}" x2="${pt(i, 1)[0]}" y2="${pt(i, 1)[1]}" stroke="var(--line)"/><text x="${x}" y="${y + 4}" text-anchor="${a}" font-size="13">${esc(d.length > 28 ? d.slice(0, 27) + "…" : d)}</text>`;
   });
   names.forEach((n, k) => {
     const v = domains.map((d) => en[n].domain_accuracy?.[d]?.accuracy ?? 0);
     g += `<polygon points="${v.map((a, i) => pt(i, a).join(",")).join(" ")}" fill="${MC[k % 5]}" fill-opacity=".10" stroke="${MC[k % 5]}" stroke-width="2"/>`;
     v.forEach((a, i) => { const [x, y] = pt(i, a); g += marker(k, x, y, 3.5); });
   });
-  return `<svg viewBox="0 0 ${S0 + 280} ${S0 + 20}" role="img" aria-label="Accuracy by domain, one polygon per model" style="width:100%;display:block;margin:auto"><g transform="translate(140,0)">${g}</g></svg>${legend(names)}`;
+  return `<svg viewBox="0 0 ${S0 + 240} ${S0 + 20}" role="img" aria-label="Accuracy by domain, one polygon per model" style="width:100%;display:block;margin:auto"><g transform="translate(120,0)">${g}</g></svg>${legend(names)}`;
 }
 
 function heat(en) {
@@ -102,7 +102,7 @@ function heat(en) {
   const cell = (d) => {
     if (!d) return "<td>n/a</td>";
     const a = d.accuracy;
-    return `<td style="background:color-mix(in srgb,var(--brand) ${Math.round(10 + 62 * a)}%,var(--panel))" title="${d.n_items} items">${pct(a, 0)}</td>`;
+    return `<td style="background:color-mix(in srgb,var(--brand) ${Math.round(8 + 70 * a)}%,var(--panel))" title="${d.n_items} items">${pct(a, 0)}</td>`;
   };
   return `<table class="heat"><thead><tr><th>Domain</th>${names.map((n) => `<th>${esc(n)}</th>`).join("")}</tr></thead><tbody>` +
     domains.map((d) => `<tr><td>${esc(d)} <small class="lead">(${en[names[0]].domain_accuracy?.[d]?.n_items ?? "?"} items)</small></td>${names.map((n) => cell(en[n].domain_accuracy?.[d])).join("")}</tr>`).join("") + `</tbody></table>`;

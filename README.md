@@ -68,7 +68,7 @@ python -m slheval run --run-id 2026-11-20-run1
 python -m slheval analyse --run-id 2026-11-20-run1
 ```
 
-To run in GitHub Actions instead, add `GEMINI_API_KEY`, `GROQ_API_KEY` or `OPENROUTER_API_KEY` as repository secrets, open the Actions tab, choose **evaluate** and select **Run workflow**. The workflow runs the tests, checks model access, runs the models, writes the report and commits the results.
+To run in GitHub Actions instead, add `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GROQ_API_KEY` or `OPENROUTER_API_KEY` as repository secrets, open the Actions tab, choose **evaluate** and select **Run workflow**. The workflow runs the tests, checks model access, runs the models, writes the report and commits the results.
 
 ### Review gate
 
