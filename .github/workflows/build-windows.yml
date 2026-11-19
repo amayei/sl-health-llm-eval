@@ -1,0 +1,47 @@
+name: build-windows
+on:
+  workflow_dispatch:
+  push:
+    tags: ["workbench-v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python -m pip install pyinstaller pywebview
+      - run: pip install pytest
+      - run: python -m pytest -q
+      - run: pyinstaller packaging/workbench.spec --noconfirm
+      - name: Smoke test the built app
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist\SL-Health-LLM-Eval-Workbench\SL-Health-LLM-Eval-Workbench.exe" -ArgumentList "--no-window" -PassThru
+          Start-Sleep -Seconds 8
+          if ($p.HasExited) { throw "app exited early" }
+          Stop-Process -Id $p.Id -Force
+      - name: Zip portable build
+        shell: pwsh
+        run: Compress-Archive -Path dist\SL-Health-LLM-Eval-Workbench -DestinationPath dist\SL-Health-LLM-Eval-Workbench-win64.zip
+      - name: Build installer (best effort)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\installer.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workbench-windows
+          path: |
+            dist/SL-Health-LLM-Eval-Workbench-win64.zip
+            dist/SL-Health-LLM-Eval-Workbench-Setup.exe
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/SL-Health-LLM-Eval-Workbench-win64.zip
+            dist/SL-Health-LLM-Eval-Workbench-Setup.exe

@@ -51,7 +51,8 @@ def make_meta(args_dict, dataset_sha, status_counts, model_cfgs, mock):
     }
 
 
-def run_model(cfg, provider, conditions, out_dir, reps, seed, limit=None, mock=False, log=print):
+def run_model(cfg, provider, conditions, out_dir, reps, seed, limit=None, mock=False, log=print,
+              should_stop=None, progress=None):
     """conditions: list of (name, items). Appends to <out_dir>/<label>.jsonl and resumes after interruption."""
     label = cfg["label"]
     out_path = Path(out_dir) / f"{label}.jsonl"
@@ -68,6 +69,8 @@ def run_model(cfg, provider, conditions, out_dir, reps, seed, limit=None, mock=F
                 for item in (items[:limit] if limit else items):
                     if (cond, item["id"], rep) in done:
                         continue
+                    if should_stop and should_stop():
+                        return calls, failures
                     perm = permutation(item["id"], rep, seed)
                     user = build_prompt(item["question"], item["options"], perm)
                     rec = {
@@ -104,6 +107,8 @@ def run_model(cfg, provider, conditions, out_dir, reps, seed, limit=None, mock=F
                     fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
                     fh.flush()
                     calls += 1
+                    if progress:
+                        progress(label, calls, failures)
                     if calls % 25 == 0:
                         log(f"  {label}: {calls} calls, {failures} failed")
                     if pause:

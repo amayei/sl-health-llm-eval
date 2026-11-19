@@ -72,8 +72,8 @@ class GeminiProvider:
 
 
 class OpenAICompatProvider:
-    def __init__(self, provider, model, api_key, max_tokens=16):
-        self.url = OPENAI_COMPAT_URLS[provider]
+    def __init__(self, provider, model, api_key, max_tokens=16, base_url=None):
+        self.url = base_url if provider == "custom" else OPENAI_COMPAT_URLS[provider]
         self.model, self.api_key, self.max_tokens = model, api_key, max_tokens
 
     def complete(self, system, user):
@@ -83,7 +83,8 @@ class OpenAICompatProvider:
             "temperature": 0,
             "max_tokens": self.max_tokens,
         }
-        data = _post_json(self.url, {"Authorization": f"Bearer {self.api_key}"}, body)
+        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        data = _post_json(self.url, headers, body)
         choices = data.get("choices") or []
         if not choices:
             return {"text": "", "model_returned": data.get("model"), "note": "no_choices"}
@@ -113,6 +114,11 @@ def make_provider(cfg, api_key):
         return GeminiProvider(cfg["model"], api_key, max_tokens)
     if kind in OPENAI_COMPAT_URLS:
         return OpenAICompatProvider(kind, cfg["model"], api_key, max_tokens)
+    if kind == "custom":
+        base_url = cfg.get("base_url", "")
+        if not base_url.startswith(("http://", "https://")):
+            raise ValueError("custom provider needs base_url starting with http:// or https://")
+        return OpenAICompatProvider(kind, cfg["model"], api_key, max_tokens, base_url=base_url)
     raise ValueError(f"unknown provider: {kind}")
 
 
