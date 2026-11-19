@@ -62,7 +62,7 @@ def run_model(cfg, provider, conditions, out_dir, reps, seed, limit=None, mock=F
             if not rec.get("error"):
                 done.add((rec["condition"], rec["item_id"], rec["rep"]))
     pause = 0.0 if mock or not cfg.get("rpm") else 60.0 / float(cfg["rpm"])
-    calls = failures = 0
+    calls = failures = streak = 0
     with out_path.open("a", encoding="utf-8") as fh:
         for rep in range(reps):
             for cond, items in conditions:
@@ -102,11 +102,17 @@ def run_model(cfg, provider, conditions, out_dir, reps, seed, limit=None, mock=F
                         )
                     except Exception as err:
                         failures += 1
+                        streak += 1
                         rec.update({"raw_response": None, "parsed_letter": None, "chosen_index": None,
                                     "correct": False, "error": str(err)[:300]})
+                    else:
+                        streak = 0
                     fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
                     fh.flush()
                     calls += 1
+                    if streak >= 5:
+                        log(f"stopping {label}: 5 consecutive failed calls ({rec['error'][:120]})")
+                        return calls, failures
                     if progress:
                         progress(label, calls, failures)
                     if calls % 25 == 0:

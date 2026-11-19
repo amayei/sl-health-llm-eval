@@ -10,6 +10,8 @@ import urllib.request
 
 USER_AGENT = "slheval/0.1 (research evaluation harness)"
 RETRY_STATUS = {408, 429, 500, 502, 503, 504}
+# Billing problems do not clear by waiting, so fail at once instead of retrying.
+FATAL_HINTS = ("no credits", "insufficient_quota", "credit balance is too low", "billing")
 
 OPENAI_COMPAT_URLS = {
     "groq": "https://api.groq.com/openai/v1/chat/completions",
@@ -41,7 +43,8 @@ def _post_json(url, headers, body, timeout=90, retries=6):
         except urllib.error.HTTPError as err:
             detail = err.read().decode("utf-8", "replace")[:300]
             last = f"HTTP {err.code}: {detail}"
-            if err.code not in RETRY_STATUS:
+            low = detail.lower()
+            if err.code not in RETRY_STATUS or any(k in low for k in FATAL_HINTS):
                 raise ProviderError(last) from err
             wait = _retry_after(err) or min(60, 2 ** attempt * 2)
         except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
