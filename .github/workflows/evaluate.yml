@@ -1,0 +1,72 @@
+name: evaluate
+
+# Manual run. Add API keys as repository secrets first (Settings, Secrets and variables, Actions):
+# GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY. Models without a key are skipped.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run identifier, for example 2026-11-20-run1 (letters, digits, dot, dash, underscore)"
+        required: true
+      models:
+        description: "Comma-separated model labels from config/models.json (blank means all with a key)"
+        required: false
+        default: ""
+      reps:
+        description: "Option-order repetitions per item"
+        required: false
+        default: "3"
+      allow_drafts:
+        description: "Allow a provisional run with items the author has not approved"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      RUN_ID: ${{ inputs.run_id }}
+      MODELS: ${{ inputs.models }}
+      REPS: ${{ inputs.reps }}
+      ALLOW_DRAFTS: ${{ inputs.allow_drafts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pytest
+      - name: Check inputs
+        run: |
+          [[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid run_id"; exit 1; }
+          [[ "$REPS" =~ ^[0-9]+$ ]] || { echo "invalid reps"; exit 1; }
+      - name: Tests and dataset validation
+        run: |
+          python -m pytest -q
+          python -m slheval validate
+      - name: Check model access
+        run: python -m slheval check-models --models "$MODELS"
+      - name: Run evaluation
+        run: |
+          FLAGS=""
+          if [ "$ALLOW_DRAFTS" = "true" ]; then FLAGS="--allow-drafts"; fi
+          python -m slheval run --run-id "$RUN_ID" --models "$MODELS" --reps "$REPS" $FLAGS
+      - name: Analyse
+        run: python -m slheval analyse --run-id "$RUN_ID"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ inputs.run_id }}
+          path: results/
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/
+          git commit -m "Add results for run $RUN_ID" || echo "nothing to commit"
+          git push

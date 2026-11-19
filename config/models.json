@@ -1,0 +1,9 @@
+{
+  "_note": "Default model identifiers for free-tier access. Provider catalogues change often, so run `python -m slheval check-models` (or the evaluate workflow, which does this first) and edit the identifiers below before a real run. Add a key as a repository secret for each provider you use. Models without a key are skipped.",
+  "models": [
+    {"label": "gemini-flash", "provider": "gemini", "model": "gemini-2.5-flash", "api_key_env": "GEMINI_API_KEY", "max_tokens": 512, "rpm": 8},
+    {"label": "llama-70b-groq", "provider": "groq", "model": "llama-3.3-70b-versatile", "api_key_env": "GROQ_API_KEY", "max_tokens": 16, "rpm": 20},
+    {"label": "llama-70b-openrouter-free", "provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free", "api_key_env": "OPENROUTER_API_KEY", "max_tokens": 16, "rpm": 8},
+    {"label": "gemma-27b-openrouter-free", "provider": "openrouter", "model": "google/gemma-3-27b-it:free", "api_key_env": "OPENROUTER_API_KEY", "max_tokens": 16, "rpm": 8}
+  ]
+}
