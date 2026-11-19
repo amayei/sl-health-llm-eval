@@ -20,7 +20,7 @@ from .data import (
     validate_krio,
     write_jsonl,
 )
-from .providers import MockProvider, check_models, make_provider, runnable
+from .providers import MockProvider, check_models, list_gemini_models, make_provider, runnable
 from .run import make_meta, run_model, write_meta
 from .stats import DEFAULT_SEED
 
@@ -127,6 +127,16 @@ def cmd_check_models(a):
     return 0 if ok_any else 1
 
 
+def cmd_list_models(a):
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        print("GEMINI_API_KEY is not set")
+        return 1
+    for name in list_gemini_models(key):
+        print(name)
+    return 0
+
+
 def cmd_run(a):
     items = read_jsonl(a.items)
     problems, _ = validate_items(items)
@@ -202,6 +212,7 @@ def build_parser():
     s.add_argument("csv"); s.add_argument("--out", default=KRIO); s.set_defaults(fn=cmd_krio_import)
     s = sub.add_parser("check-models"); common(s)
     s.add_argument("--models", default=""); s.set_defaults(fn=cmd_check_models)
+    s = sub.add_parser("list-models"); common(s); s.set_defaults(fn=cmd_list_models)
     s = sub.add_parser("run"); common(s)
     s.add_argument("--run-id", required=True)
     s.add_argument("--models", default="")

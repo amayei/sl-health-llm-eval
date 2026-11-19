@@ -137,3 +137,22 @@ def check_models(cfgs, env=None):
         except Exception as err:  # report any failure and keep checking the others
             results[label] = (False, str(err)[:200])
     return results
+
+
+def list_gemini_models(api_key):
+    """Return the Gemini model ids that support generateContent for this key."""
+    import json
+    import urllib.request
+    names = []
+    token = ""
+    while True:
+        url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200" + (f"&pageToken={token}" if token else "")
+        req = urllib.request.Request(url, headers={"x-goog-api-key": api_key})
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        for m in data.get("models", []):
+            if "generateContent" in m.get("supportedGenerationMethods", []):
+                names.append(m["name"].removeprefix("models/"))
+        token = data.get("nextPageToken", "")
+        if not token:
+            return sorted(names)
