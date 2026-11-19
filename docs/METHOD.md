@@ -28,5 +28,5 @@ Recall and application of public health knowledge relevant to Sierra Leone, asse
 - Accuracy is an activity-level output of a benchmark. It is not an outcome or impact measure of any health programme.
 - Differences smaller than the interval width are not evidence of a difference between models.
 - Domain results hold roughly six items each.
-- Results from draft items are provisional.
+- Results from draft items are provisional. The built-in items are author-approved, not independently reviewed.
 - Contamination: items carry a canary string. Public items can enter future training data, so scores may inflate over time.

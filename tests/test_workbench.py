@@ -62,14 +62,15 @@ def test_index_has_token_but_static_traversal_blocked(server):
 
 def test_real_run_refuses_unapproved_items(server):
     wb, port = server
+    wb.import_bank("drafty", "id,domain,question,option_a,option_b,option_c,option_d,answer\nQ1,T,Q?,a,b,c,d,A\n", "csv", False)
     with pytest.raises(ValueError, match="not approved"):
-        wb.start_job({"run_id": "r1", "models": [{"label": "gemini-flash", "api_key": "k"}]})
+        wb.start_job({"run_id": "r1", "bank": "drafty", "models": [{"label": "gemini-flash", "api_key": "k"}]})
 
 
 def test_real_run_needs_key(server):
     wb, _ = server
     with pytest.raises(ValueError, match="API key"):
-        wb.start_job({"run_id": "r2", "allow_drafts": True, "models": [{"label": "gemini-flash"}]})
+        wb.start_job({"run_id": "r2", "models": [{"label": "gemini-flash"}]})
 
 
 def test_mock_run_end_to_end_and_no_key_persisted(server):

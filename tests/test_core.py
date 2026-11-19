@@ -170,7 +170,13 @@ def test_mock_run_stays_out_of_results(tmp_path, monkeypatch):
 
 def test_real_run_requires_approved_items(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    code = main(["run", "--run-id", "x", "--items", str(ITEMS), "--config", str(CONFIG)])
+    drafts = tmp_path / "drafts.jsonl"
+    rows = read_jsonl(ITEMS)
+    for r in rows:
+        r["status"] = "draft"
+    from slheval.data import write_jsonl
+    write_jsonl(drafts, rows)
+    code = main(["run", "--run-id", "x", "--items", str(drafts), "--config", str(CONFIG)])
     assert code == 2
     assert not (tmp_path / "results").exists()
 

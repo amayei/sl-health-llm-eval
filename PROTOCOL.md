@@ -77,4 +77,5 @@ No human participants and no patient data. The study evaluates software on publi
 
 | Date | Change | Reason |
 |---|---|---|
+| 2026-11-19 | All 48 items approved by the author through the review gate | Time. No independent subject-matter reviewer. |
 | 2026-11-19 | Krio subset drafted with AI assistance (ChatGPT), then reviewed and corrected by the author | Time. No second reader or back-translation. |

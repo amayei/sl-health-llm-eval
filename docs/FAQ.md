@@ -4,7 +4,7 @@
 
 **Can a high score justify deployment?** No. It is one screening input. See LIMITATIONS.md.
 
-**Why are results marked provisional?** The 48 items await approval by a qualified reviewer.
+**Why are some results marked provisional?** Runs that include unapproved (draft) items carry that label. The built-in 48 items are approved by their author, without independent review.
 
 **Does it send my data anywhere?** Only the test questions go to the provider you select. Use a local endpoint to avoid that.
 

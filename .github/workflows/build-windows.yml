@@ -42,6 +42,12 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          prerelease: true
+          name: Evaluation Workbench ${{ github.ref_name }} (pilot, unsigned)
+          body: |
+            Pilot release of the SL-Health-LLM-Eval Evaluation Workbench for Windows.
+            Unsigned build: Windows SmartScreen may warn. Choose More info, then Run anyway, only if you downloaded this from this repository.
+            Items are author-approved only, with no independent review. See docs/LIMITATIONS.md.
           files: |
             dist/SL-Health-LLM-Eval-Workbench-win64.zip
             dist/SL-Health-LLM-Eval-Workbench-Setup.exe

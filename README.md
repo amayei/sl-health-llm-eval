@@ -116,7 +116,7 @@ No real model run has been completed yet. This section will be updated with a li
 
 ## AI assistance
 
-The harness code, tests and first draft of the item bank were written with assistance from Claude (Anthropic). The items are drafts until the author approves them through the review gate. The first Krio draft was also AI-assisted (ChatGPT). Review and correction of the Krio text, approval of the answer key and interpretation of results are the author's own.
+The harness code, tests and first draft of the item bank were written with assistance from Claude (Anthropic). The items were approved by the author through the review gate on 2026-11-19. There was no independent second reviewer. The first Krio draft was also AI-assisted (ChatGPT). Review and correction of the Krio text, approval of the answer key and interpretation of results are the author's own.
 
 ## Ethics and safety
 

@@ -17,7 +17,7 @@ AI tools are being offered to health systems in Sierra Leone with little evidenc
 
 - It does not show that a tool is safe or fit for clinical use. Multiple-choice knowledge is a narrow proxy.
 - It does not test free-text advice, referral decisions, patient-facing safety, bias across populations, or workflow fit.
-- Version 0.1 results are provisional until the 48 items are approved by a qualified reviewer and, for Krio, read by a second speaker.
+- The 48 items are approved by their author only. Independent review by a clinician or programme expert, and a second Krio reader, are still needed before results are treated as more than a pilot.
 
 ## Where it fits in a deployment decision
 
